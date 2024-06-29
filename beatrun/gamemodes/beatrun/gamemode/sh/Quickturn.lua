@@ -3,6 +3,8 @@ if CLIENT then
 	QuickturnHandsOnly = CreateClientConVar("Beatrun_QuickturnHandsOnly", "1", true, true, language.GetPhrase("beatrun.convars.quickturnhandsonly"), 0, 1)
 end
 
+local RealismMode = GetConVar("Beatrun_RealismMode")
+
 function DoJumpTurn(lookbehind)
 	if not LocalPlayer():Alive() then return end
 
@@ -41,9 +43,11 @@ function DoJumpTurnStand()
 	if LocalPlayer():notUsingRH() then
 		BodyAnim:SetSequence("jumpturnlandstandgun")
 	else
-		BodyAnim:SetSequence("jumpturnlandstand")
+		BodyAnim:SetSequence(RealismMode:GetBool() and "jumpturnlandstandgun" or "jumpturnlandstand")
 
-		ParkourEvent("jumpturnlandstand", LocalPlayer(), game.SinglePlayer())
+		if not RealismMode:GetBool() then
+			ParkourEvent("jumpturnlandstand", LocalPlayer(), game.SinglePlayer())
+		end
 	end
 
 	BodyAnimCycle = 0
@@ -196,8 +200,8 @@ local function Quickturn(ply, mv, cmd)
 			standpunch.x = standpunch.x * 0.1
 			standpunch.z = standpunch.x * 10
 		else
-			standpunch.x = standpunch.x * 15
-			standpunch.z = 0
+			standpunch.x = standpunch.x * (RealismMode:GetBool() and 0.1 or 15)
+			standpunch.z = RealismMode:GetBool() and standpunch.x * 10 or 0
 		end
 
 		if CLIENT and IsFirstTimePredicted() then

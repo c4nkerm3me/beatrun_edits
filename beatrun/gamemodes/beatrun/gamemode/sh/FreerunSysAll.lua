@@ -35,6 +35,8 @@ if game.SinglePlayer() and CLIENT then
 	end)
 end
 
+local RealismMode = GetConVar("Beatrun_RealismMode")
+
 hook.Add("PlayerStepSoundTime", "MEStepTime", function(ply, step, walking)
 	local sprint = ply:GetMEMoveLimit() < speed_limit:GetInt() - 25
 	local stepmod = ply:GetStepRight() and 1 or -1
@@ -262,14 +264,14 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 	end
 
 	if (ismoving or ply:GetMantle() ~= 0) and ply:GetMESprintDelay() < CurTime() and (cmd:KeyDown(IN_SPEED) or ply:GetMantle() ~= 0 or not ply:OnGround() or (not ply:OnGround() or ply:GetMantle() ~= 0) and mv:GetVelocity().z > -450) then
-		local mult = 0.6 + math.abs(ply:GetMEMoveLimit() / (speed_limit:GetInt() - 25) - 1)
+		local mult = (RealismMode:GetBool() and 0.3 or 0.6) + math.abs(ply:GetMEMoveLimit() / (speed_limit:GetInt() - 25) - 1)
 
 		if not ply:InOverdrive() and ply:GetMEMoveLimit() > (speed_limit:GetInt() - 100) then
-			mult = mult * 0.35
+			mult = mult * (RealismMode:GetBool() and 0.25 or 0.35)
 		end
 
 		if ply:GetMEMoveLimit() < 160 then
-			mult = mult * ply:GetMEMoveLimit() / 1000
+			mult = mult * ply:GetMEMoveLimit() / (RealismMode:GetBool() and 2000 or 1000)
 		end
 
 		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() + mult * ply:GetOverdriveMult() * 2, 0, speed_limit:GetInt() * ply:GetOverdriveMult()))
@@ -339,7 +341,7 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 		local forwarddelta = activewep.SideStepDir:Dot(ang:Forward())
 
 		if forwarddelta > 0.35 then
-			ply:SetMEMoveLimit(speed_limit:GetInt())
+			ply:SetMEMoveLimit(speed_limit:GetInt() / (RealismMode:GetBool() and 1.15 or 1))
 		end
 
 		if forwarddelta < 0.65 then

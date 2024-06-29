@@ -1,4 +1,5 @@
 local allowPropSpawn = CreateConVar("Beatrun_AllowPropSpawn", "0", {FCVAR_ARCHIVE})
+local realismModeParkour = CreateConVar("Beatrun_RealismMode", 0, {FCVAR_REPLICATED, FCVAR_ARCHIVE}, "Realistic Parkour", 0, 1)
 
 if SERVER then
 	util.AddNetworkString("SPParkourEvent")
@@ -22,7 +23,7 @@ if SERVER then
 end
 
 if CLIENT then
-	CreateClientConVar("Beatrun_FOV", 100, true, true, language.GetPhrase("beatrun.convars.fov"), 70, 120)
+	CreateClientConVar("Beatrun_FOV", 100, true, true, language.GetPhrase("beatrun.convars.fov"), 70, 160)
 	CreateClientConVar("Beatrun_CPSave", 1, true, true, language.GetPhrase("beatrun.convars.cpsave"), 0, 1)
 end
 

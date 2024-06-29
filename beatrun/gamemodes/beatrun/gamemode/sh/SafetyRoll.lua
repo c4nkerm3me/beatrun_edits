@@ -6,6 +6,8 @@ local landang = Angle(0, 0, 0)
 local lastGroundSpeed = 0
 local rollspeedloss = CreateConVar("Beatrun_RollSpeedLoss", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE}, "", 0, 1)
 
+local RealismMode = GetConVar("Beatrun_RealismMode")
+
 local function SafetyRollThink(ply, mv, cmd)
 	local speed = mv:GetVelocity().z
 
@@ -83,7 +85,7 @@ net.Receive("RollAnimSP", function()
 	if net.ReadBool() then
 		roll.AnimString = ply:UsingRH() and "land" or "landgun"
 		roll.animmodelstring = "climbanim"
-		roll.BodyAnimSpeed = 1
+		roll.BodyAnimSpeed = RealismMode:GetBool() and 0.65 or 1
 	elseif net.ReadBool() then
 		roll.AnimString = "evaderoll"
 		roll.animmodelstring = "climbanim"
@@ -91,7 +93,7 @@ net.Receive("RollAnimSP", function()
 	else
 		roll.AnimString = ply:UsingRH() and "meroll" or "merollgun"
 		roll.animmodelstring = "climbanim"
-		roll.BodyAnimSpeed = 1.15
+		roll.BodyAnimSpeed = RealismMode:GetBool() and 1 or 1.15
 	end
 
 	CacheBodyAnim()
@@ -228,11 +230,11 @@ if SERVER then
 			return 0
 		end
 
-		if speed >= 800 and not ply:InOverdrive() and not ply:HasGodMode() then
-			if speed < 800 and CurTime() < ply:GetSafetyRollKeyTime() and not ply:GetCrouchJump() and not ply:Crouching() then
+		if speed >= (RealismMode:GetBool() and 300 or 800) and not ply:InOverdrive() and not ply:HasGodMode() then
+			if not RealismMode:GetBool() and (speed < 800 and CurTime() < ply:GetSafetyRollKeyTime() and not ply:GetCrouchJump() and not ply:Crouching()) or (speed < 300 or (CurTime() < ply:GetSafetyRollKeyTime() and speed < 600) or ply:GetJumpTurn()) then
 				return 0
 			else
-				return 1000
+				return (RealismMode:GetBool() and ((speed-300)/500)*100 * (CurTime() < ply:GetSafetyRollKeyTime() and 0.5 or 1) or 1000)
 			end
 		end
 

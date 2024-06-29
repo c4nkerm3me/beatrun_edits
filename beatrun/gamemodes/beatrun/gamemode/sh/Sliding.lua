@@ -39,6 +39,8 @@ local animtable = {
 
 local blocked = false
 
+local RealismMode = GetConVar("Beatrun_RealismMode")
+
 local function SlidingAnimThink()
 	local ba = BodyAnim
 	local ply = LocalPlayer()
@@ -258,7 +260,7 @@ hook.Add("SetupMove", "qslide", function(ply, mv, cmd)
 	speed = speed:Length()
 
 	local runspeed = ply:GetRunSpeed()
-	local slidetime = math.max(0.1, qslide_duration)
+	local slidetime = RealismMode:GetBool() and math.max(0.1, 1.5) or math.max(0.1, qslide_duration)
 	local ducking = mv:KeyDown(IN_DUCK)
 	local crouching = ply:Crouching()
 	local sprinting = mv:KeyDown(IN_SPEED)
@@ -381,6 +383,9 @@ hook.Add("SetupMove", "qslide", function(ply, mv, cmd)
 
 		if ply:GetDive() then
 			ply.DiveSliding = true
+			if RealismMode:GetBool() and not slippery then
+				slidetime = math.max(0.1, 0.5)
+			end
 		end
 
 		ply:SetViewOffset(Vector(0, 0, 64))
@@ -678,7 +683,7 @@ hook.Add("StartCommand", "qslidespeed", function(ply, cmd)
 
 		cmd:ClearMovement()
 
-		local slidetime = math.max(0.1, qslide_duration)
+		local slidetime = RealismMode:GetBool() and math.max(0.1, 1.5) or math.max(0.1, qslide_duration)
 
 		if (ply:GetSlidingTime() - CurTime()) / slidetime > 0.8 and (ply.SlidingInitTime > CurTime() - 0.25 or ply:GetSlidingSlippery()) then
 			cmd:SetButtons(bit.bor(cmd:GetButtons(), IN_DUCK))

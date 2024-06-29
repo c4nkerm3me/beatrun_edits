@@ -42,6 +42,8 @@ elseif game.SinglePlayer() and CLIENT then
 	end)
 end
 
+local RealismMode = GetConVar("Beatrun_RealismMode")
+
 local function ClimbingEnd(ply, mv, cmd)
 	mv:SetOrigin(ply:GetClimbingEnd())
 	ply:SetClimbing(0)
@@ -255,6 +257,50 @@ local function ClimbingThink(ply, mv, cmd)
 				if not trout.Hit then
 					ply:SetClimbing(2)
 					ParkourEvent("climbheave", ply)
+				end
+			elseif mv:KeyDown(IN_JUMP) then
+				local new_tr = {}
+				local new_trout = {}
+
+				local newang = ply:GetClimbingAngle()
+
+				new_tr.start = ply:EyePos() + (newang:Up()*15) + (newang:Forward()*17.5)
+			    new_tr.endpos = new_tr.start + (newang:Up() * 250)
+				new_tr.collisiongroup = COLLISION_GROUP_PLAYER_MOVEMENT
+			    new_tr.filter = ply
+			    new_tr.output = new_trout
+
+				util.TraceLine(new_tr)
+
+				if new_trout.Hit and not new_trout.StartSolid then
+					mv:SetOrigin(ply:GetClimbingStart() - ply:GetClimbingAngle():Forward() * 0.6)
+			        ply:SetMoveType(MOVETYPE_WALK)
+			        mv:SetButtons(0)
+			        ply:SetClimbing(0)
+			        ply:SetSafetyRollKeyTime(CurTime() + 0.1)
+			        ParkourEvent("hangjump", ply)
+
+				    if CLIENT and IsFirstTimePredicted() then
+						lockang2 = false
+						lockang = false
+						BodyLimitX = 90
+						BodyLimitY = 180
+		
+						local ang = ply:EyeAngles()
+						ang.x = 0
+						ang.z = 0
+						BodyAnim:SetAngles(ang)
+					elseif game.SinglePlayer() then
+						ply:SendLua("lockang2=false lockang=false BodyLimitX=90 BodyLimitY=180 local ang=LocalPlayer():EyeAngles() ang.x=0 ang.z=0 BodyAnim:SetAngles(ang)")
+					end
+
+					--local jump_vel = 300
+					local dist = ply:EyePos():Distance(new_trout.HitPos)
+
+					local dist_frac = math.Clamp(dist/new_trout.Fraction, 0, 1000)
+					local dist_perc = math.Clamp(dist/85, 1.15, 100)
+
+			        mv:SetVelocity(newang:Up() * (dist_frac*dist_perc))
 				end
 			end
 		end
@@ -695,6 +741,14 @@ local function ClimbingCheck(ply, mv, cmd)
 	if folded then
 		ply:SetClimbing(5)
 		ply:SetClimbingDelay(CurTime() + 0.8)
+
+		if RealismMode:GetBool() then
+			local damageinfo = DamageInfo()
+		    damageinfo:SetDamageType(32)
+		    damageinfo:SetDamage((math.abs(lastvel.z+400)/600)*100)
+
+		    ply:TakeDamageInfo(damageinfo)
+		end
 
 		ParkourEvent("hangfoldedstart", ply)
 	else
