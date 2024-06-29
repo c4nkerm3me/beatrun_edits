@@ -279,6 +279,9 @@ hook.Add("PopulateToolMenu", "Beatrun_ToolMenu", function()
 		panel:CheckBox("#beatrun.toolsmenu.moves.realisticwallrunning", "Beatrun_PuristWallrun")
 		panel:ControlHelp("#beatrun.toolsmenu.moves.realisticwallrunningdesc")
 
+		panel:CheckBox("Realism Parkour", "Beatrun_RealismMode")
+		panel:ControlHelp("Makes every single movement mechanic (wallrun, wallclimb and etc.) more accurate and similar to actual IRL parkour.")
+
 		local divider = vgui.Create("DHorizontalDivider")
 		panel:AddItem(divider)
 
