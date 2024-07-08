@@ -282,6 +282,9 @@ hook.Add("PopulateToolMenu", "Beatrun_ToolMenu", function()
 		panel:CheckBox("Realism Parkour", "Beatrun_RealismMode")
 		panel:ControlHelp("Makes every single movement mechanic (wallrun, wallclimb and etc.) more accurate and similar to actual IRL parkour.")
 
+		panel:CheckBox("ME Footsteps", "Beatrun_Footsteps")
+		panel:ControlHelp("Turns on/off the Mirror's Edge footsteps.")
+
 		local divider = vgui.Create("DHorizontalDivider")
 		panel:AddItem(divider)
 

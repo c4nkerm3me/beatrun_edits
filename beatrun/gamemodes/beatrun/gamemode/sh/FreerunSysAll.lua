@@ -1,6 +1,7 @@
 local quakejump = CreateConVar("Beatrun_QuakeJump", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 local sidestep = CreateConVar("Beatrun_SideStep", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 local speed_limit = CreateConVar("Beatrun_SpeedLimit", 325, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
+local BeatrunFootsteps = CreateConVar("Beatrun_Footsteps", 1, {FCVAR_REPLICATED, FCVAR_ARCHIVE})
 
 local function Hardland(jt)
 	local ply = LocalPlayer()
@@ -97,6 +98,7 @@ hook.Add("PlayerFootstep", "MEStepSound", function(ply, pos, foot, sound, volume
 	if (ply:GetSliding() or CurTime() < ply:GetSafetyRollTime() - 0.5) and not skipcheck then return true end
 	if ply:GetMEMoveLimit() < 100 and ply:KeyDown(IN_FORWARD) and not ply.FootstepLand and not IsValid(ply:GetBalanceEntity()) then return true end
 
+	if BeatrunFootsteps:GetBool() then
 	local mat = sound:sub(0, -6)
 	local newsound = FOOTSTEPS_LUT[mat]
 
@@ -126,22 +128,25 @@ hook.Add("PlayerFootstep", "MEStepSound", function(ply, pos, foot, sound, volume
 	if ply:WaterLevel() > 0 then
 		ply:EmitSound("Footsteps.Water")
 	end
+	end
 
 	if ply:InOverdrive() and ply:GetVelocity():Length() > 400 then
 		ply:EmitSound("Footsteps.Spark")
 	end
 
-	if (CLIENT and IsFirstTimePredicted() or game.SinglePlayer()) and ply.FootstepLand then
-		local landsound = FOOTSTEPS_LAND_LUT[mat] or "Concrete"
-
-		ply:EmitSound("Land." .. landsound)
-
-		ply.FootstepLand = false
+	if BeatrunFootsteps:GetBool() then
+		if (CLIENT and IsFirstTimePredicted() or game.SinglePlayer()) and ply.FootstepLand then
+			local landsound = FOOTSTEPS_LAND_LUT[mat] or "Concrete"
+	
+			ply:EmitSound("Land." .. landsound)
+	
+			ply.FootstepLand = false
+		end
+	
+		hook.Run("PlayerFootstepME", ply, pos, foot, sound, volume, filter)
+	
+		return true
 	end
-
-	hook.Run("PlayerFootstepME", ply, pos, foot, sound, volume, filter)
-
-	return true
 end)
 
 hook.Add("OnPlayerHitGround", "MELandSound", function(ply, water, floater, speed)
@@ -264,14 +269,14 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 	end
 
 	if (ismoving or ply:GetMantle() ~= 0) and ply:GetMESprintDelay() < CurTime() and (cmd:KeyDown(IN_SPEED) or ply:GetMantle() ~= 0 or not ply:OnGround() or (not ply:OnGround() or ply:GetMantle() ~= 0) and mv:GetVelocity().z > -450) then
-		local mult = (RealismMode:GetBool() and 0.3 or 0.6) + math.abs(ply:GetMEMoveLimit() / (speed_limit:GetInt() - 25) - 1)
+		local mult = (((RealismMode:GetBool() and ply:UsingRH()) and 0.3) or (ply:notUsingRH() and 0.9) or 0.6) + math.abs(ply:GetMEMoveLimit() / (speed_limit:GetInt() - 25) - 1)
 
 		if not ply:InOverdrive() and ply:GetMEMoveLimit() > (speed_limit:GetInt() - 100) then
-			mult = mult * (RealismMode:GetBool() and 0.25 or 0.35)
+			mult = mult * (((RealismMode:GetBool() and ply:UsingRH()) and 0.25) or (ply:notUsingRH() and 0.5) or 0.35)
 		end
 
 		if ply:GetMEMoveLimit() < 160 then
-			mult = mult * ply:GetMEMoveLimit() / (RealismMode:GetBool() and 2000 or 1000)
+			mult = mult * ply:GetMEMoveLimit() / (((RealismMode:GetBool() and ply:UsingRH()) and 2000) or (ply:notUsingRH() and 750) or 1000)
 		end
 
 		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() + mult * ply:GetOverdriveMult() * 2, 0, speed_limit:GetInt() * ply:GetOverdriveMult()))
