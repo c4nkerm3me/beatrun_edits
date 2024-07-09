@@ -77,12 +77,12 @@ hook.Add("PlayerStepSoundTime", "MEStepTime", function(ply, step, walking)
 		end
 	end
 
-	local steptime = math.Clamp(750 / (ply:GetVelocity() * Vector(1, 1, 0)):Length() * 100, 200, 400)
+	local stepspeed = math.Clamp(((ply:GetVelocity()*Vector(1,1,0)):Length()-150)/150, 0, 1)
+	local steptime = math.Clamp(400-(150*(stepspeed/1)), 200, 400)
 
 	if ply:Crouching() then
 		steptime = steptime * 2
 	end
-
 	if ply:InOverdrive() then
 		steptime = steptime * 0.8
 	end
@@ -236,8 +236,10 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 		ply.FootstepLand = true
 	end
 
-	if ply:GetRunSpeed() ~= speed_limit:GetInt() * ply:GetOverdriveMult() then
-		ply:SetRunSpeed(speed_limit:GetInt() * ply:GetOverdriveMult())
+	local hasmwmt = ConVarExists("mwmt_sprint_doubletap")
+
+	if ply:GetRunSpeed() ~= speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1) then
+		ply:SetRunSpeed(speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1))
 	end
 
 	if not ply:GetMEMoveLimit() then
@@ -279,9 +281,9 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 			mult = mult * ply:GetMEMoveLimit() / (((RealismMode:GetBool() and ply:UsingRH()) and 2000) or (ply:notUsingRH() and 750) or 1000)
 		end
 
-		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() + mult * ply:GetOverdriveMult() * 2, 0, speed_limit:GetInt() * ply:GetOverdriveMult()))
+		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() + mult * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1) * 2, 0, speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1)))
 	elseif not ismoving and (not ply:Crouching() or ply:GetCrouchJump()) or CurTime() < ply:GetMESprintDelay() and ply:OnGround() then
-		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() - 40, weaponspeed, speed_limit:GetInt() * ply:GetOverdriveMult()))
+		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() - 40, weaponspeed, speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1)))
 	end
 
 	if MEAngDiff > 1.25 and ply:GetWallrun() == 0 then
