@@ -142,7 +142,6 @@ hook.Add("PlayerFootstep", "MEStepSound", function(ply, pos, foot, sound, volume
 	
 			ply.FootstepLand = false
 		end
-	
 		hook.Run("PlayerFootstepME", ply, pos, foot, sound, volume, filter)
 	
 		return true
@@ -238,8 +237,11 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 
 	local hasmwmt = ConVarExists("mwmt_sprint_doubletap")
 
-	if ply:GetRunSpeed() ~= speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1) then
-		ply:SetRunSpeed(speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1))
+	local sprint_mult = hasmwmt and ply:GetSprintMult(ply) or 1
+	local sprint_diff = math.Clamp(sprint_mult+0.25, 0, 1.25)
+
+	if ply:GetRunSpeed() ~= speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and sprint_diff or sprint_mult) or 1) then
+		ply:SetRunSpeed(speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and sprint_diff or sprint_mult) or 1))
 	end
 
 	if not ply:GetMEMoveLimit() then
@@ -281,12 +283,12 @@ hook.Add("SetupMove", "MESetupMove", function(ply, mv, cmd)
 			mult = mult * ply:GetMEMoveLimit() / (((RealismMode:GetBool() and ply:UsingRH()) and 2000) or (ply:notUsingRH() and 750) or 1000)
 		end
 
-		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() + mult * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1) * 2, 0, speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1)))
+		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() + mult * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and sprint_diff or sprint_mult) or 1) * 2, 0, speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and sprint_diff or sprint_mult) or 1)))
 	elseif not ismoving and (not ply:Crouching() or ply:GetCrouchJump()) or CurTime() < ply:GetMESprintDelay() and ply:OnGround() then
-		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() - 40, weaponspeed, speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and 1.25 or 1) or 1)))
+		ply:SetMEMoveLimit(math.Clamp(ply:GetMEMoveLimit() - 40, weaponspeed, speed_limit:GetInt() * ply:GetOverdriveMult() * (hasmwmt and (ply:GetSprinting() and sprint_diff or sprint_mult) or 1)))
 	end
 
-	if MEAngDiff > 1.25 and ply:GetWallrun() == 0 then
+	if MEAngDiff > 1.25 and ply:GetWallrun() == 0 and not hasmwmt then
 		local slow = MEAngDiff * 0.75
 		ply:SetMEMoveLimit(math.max(ply:GetMEMoveLimit() - slow, 160))
 	end
